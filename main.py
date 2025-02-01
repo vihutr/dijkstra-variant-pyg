@@ -3,7 +3,7 @@ from collections import deque
 import heapq
 from dataclasses import dataclass, field
 
-DIST = 10
+DIST = 25
 
 pygame.init()
 
@@ -50,27 +50,32 @@ class Node:
         self.prev = None
         
         self.weight = random.randint(1, Node.weight_range)
-        self.dist = 0
+        self.dist = float('inf')
         
         self.blocked = False
         self.visited = False
+        self.path = False
 
         self.rect = pygame.Rect(self.x * w, self.y * h, w - Node.gap, h - Node.gap)
 
-    def reset_path(self):
+    def reset_pathfind(self):
         self.dist = float('inf')
         self.prev = None
-        self.blocked = False
         self.visited = False
+        self.path = False
 
-    def draw(self, surface):
+    def draw(self, surface, color_override=None):
         color = Node.default_node_color
-        if self.blocked:
+        if self.path:
+            color = Node.path_color
+        elif self.blocked:
             color = Node.blocked_color
         elif self.visited:
             color = Node.visited_color
         if self.prev is None and self.dist == 0:
             color = Node.start_color
+        if color_override:
+            color = color_override
         # if self.in_queue:
         #     pygame.draw.circle(surface, color, (self.x * w + w // 2, self.y * h + h // 2), w // 3) 
         pygame.draw.rect(surface, color, self.rect)
@@ -91,7 +96,7 @@ class Grid:
         self.size = size
         self.nodes: list[Node] = []
         self.load()
-        print(len(self.nodes) * len(self.nodes[0]))
+        # print(len(self.nodes) * len(self.nodes[0]))
 
     def load(self):
         self.load_nodes()
@@ -120,13 +125,18 @@ class Grid:
         if node.y > 0:
             node.neighbors.append(self.nodes[node.x][node.y - 1])
 
-    def reset_node_paths(self):
+    def reset_pathfind(self):
         for rows in self.nodes:
             for node in rows:
-                node.reset_path()
+                node.reset_pathfind()
+    
+    def reset_path(self):
+        for rows in self.nodes:
+            for node in rows:
+                node.path = False
 
     def calculate_movable(self, start_pos, movement_points):
-        self.reset_node_paths()
+        self.reset_pathfind()
         queue = []
         start = self.nodes[start_pos[0]][start_pos[1]]
         start.dist = 0
@@ -136,44 +146,42 @@ class Grid:
             current = heapq.heappop(queue).item
             for neighbor in current.neighbors:
                 new_dist = current.dist + neighbor.weight
-                if new_dist < neighbor.dist and new_dist <= movement_points:
+                if new_dist < neighbor.dist and new_dist <= movement_points and not neighbor.blocked:
                     neighbor.dist = new_dist
                     neighbor.prev = current
                     heapq.heappush(queue, PrioritizedItem(neighbor.dist, neighbor))
             current.visited = True
 
     def get_path(self, start_pos, end_pos):
+        self.reset_path()
         path = []
-        end = self.nodes[end_pos[0], end_pos[1]]
-        start = self.nodes[start_pos[0], start_pos[1]]
-        current = end
-        path.append((current.x, current.y))
-        while current is not start:
-            current = current.prev
-            path.append((current.x, current.y))
+        curr_end = self.nodes[end_pos[0]][end_pos[1]]
+        curr_start = self.nodes[start_pos[0]][start_pos[1]]
+        current = curr_end
+        while current is not curr_start:
             if current is None:
+                print("No Path")
                 return "No path between these nodes"
+            current.path = True
+            path.append(f'{current.x}, {current.y}')
+            current = current.prev
+        print(path)
         return '->'.join(path)
 
     def draw(self, surface):
         for rows in self.nodes:
             for node in rows:
                 node.draw(surface)
-
-# def clickWall(pos, state):
-#     x = pos[0] // w
-#     y = pos[1] // h
-#     grid[x][y].blocked = state
+                if node == end:
+                    node.draw(surface, Node.end_color)
+                
 
 bg_color = (20, 20, 20)
-
-no_path = False
-path_found = False
-
 running = True
-
 grid = Grid((cols, rows))
-
+path_calculated = False
+start = None
+end = None
 
 while running:
     for e in pygame.event.get():
@@ -187,13 +195,28 @@ while running:
             pass
         if e.type == pygame.MOUSEBUTTONDOWN:
             pt = pygame.mouse.get_pos()
+            print(pt)
             for r in grid.nodes:
                 for n in r:
                     if n.rect.collidepoint(pt):
-                        grid.calculate_movable((n.x, n.y), DIST)
+                        if e.button == 1:
+                            start = (n.x, n.y)
+                            print(f'calculating path of {n.x},{n.y}')
+                            grid.calculate_movable(start, DIST)
+                            path_calculated = True
+                        elif e.button == 2 and path_calculated:
+                            end = n
+                            end_coords = (n.x, n.y)
+                            grid.get_path(start, end_coords)
+                        elif e.button == 3:
+                            print(f'{n.x},{n.y} blocked')
+                            n.blocked = not n.blocked
         if e.type == pygame.KEYDOWN:
             if e.key == pygame.K_SPACE:
-                grid.reset_node_paths()
+                grid.reset_pathfind()
+                path_calculated = False
+                start = None
+                end = None
 
     screen.fill(bg_color)
     grid.draw(screen)
