@@ -7,7 +7,7 @@ DIST = 25
 
 pygame.init()
 
-width = 1280
+width = 800
 height = 800
 
 screen = pygame.display.set_mode((width, height))
@@ -160,12 +160,12 @@ class Grid:
         current = curr_end
         while current is not curr_start:
             if current is None:
-                print("No Path")
+                # print("No Path")
                 return "No path between these nodes"
             current.path = True
             path.append(f'{current.x}, {current.y}')
             current = current.prev
-        print(path)
+        # print(path)
         return '->'.join(path)
 
     def draw(self, surface):
@@ -182,6 +182,9 @@ grid = Grid((cols, rows))
 path_calculated = False
 start = None
 end = None
+end_coords = None
+# 0 = started hold erase, 1 = started hold to fill
+hold_type = -1
 
 while running:
     for e in pygame.event.get():
@@ -190,34 +193,57 @@ while running:
             pygame.quit()
             sys.exit()
         if e.type == pygame.MOUSEBUTTONUP:
-            pass
-        if e.type == pygame.MOUSEMOTION:
-            pass
+            if e.button == 3:
+                hold_type = -1
         if e.type == pygame.MOUSEBUTTONDOWN:
             pt = pygame.mouse.get_pos()
-            print(pt)
+            # print(pt)
             for r in grid.nodes:
                 for n in r:
                     if n.rect.collidepoint(pt):
                         if e.button == 1:
                             start = (n.x, n.y)
-                            print(f'calculating path of {n.x},{n.y}')
+                            # print(f'calculating path of {n.x},{n.y}')
                             grid.calculate_movable(start, DIST)
                             path_calculated = True
+                            if end:
+                                grid.get_path(start, end_coords)
                         elif e.button == 2 and path_calculated:
                             end = n
                             end_coords = (n.x, n.y)
                             grid.get_path(start, end_coords)
                         elif e.button == 3:
-                            print(f'{n.x},{n.y} blocked')
+                            # print(f'{n.x},{n.y} blocked')
+                            if n.blocked is False:
+                                hold_type = 1
+                            else:
+                                hold_type = 0
                             n.blocked = not n.blocked
         if e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_ESCAPE:
+                running = False
             if e.key == pygame.K_SPACE:
                 grid.reset_pathfind()
                 path_calculated = False
                 start = None
                 end = None
-
+                end_coords = None
+    if hold_type > -1:
+        pt = pygame.mouse.get_pos()
+        for r in grid.nodes:
+            for n in r:
+                if n.rect.collidepoint(pt):
+                    if path_calculated:
+                        grid.calculate_movable(start, DIST)
+                        if end:
+                            grid.get_path(start, end_coords)
+                    if hold_type == 0:
+                        n.blocked = False
+                    elif hold_type == 1:
+                        n.blocked = True
     screen.fill(bg_color)
     grid.draw(screen)
     pygame.display.update()
+
+pygame.quit()
+sys.exit()
