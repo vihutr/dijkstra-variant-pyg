@@ -1,7 +1,6 @@
 alternative dijkstra implementation using incoming weights
 
-<img src="./demo1.gif" width="400" height="400" />
-<img src="./demo2.gif" width="400" height="400" />
+<img src="./demo1.gif" width="300" height="300"/><img src="./demo2.gif" width="300" height="300"/>
 
 Controls/Legend:
 Left Click: Red = Start Point/ Path
