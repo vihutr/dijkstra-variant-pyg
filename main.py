@@ -33,9 +33,11 @@ class Node:
     default_node_color = (100, 100, 100)
     start_color = (255, 0, 0)
     blocked_color = (0, 0, 0)
-    visited_color = (40, 150, 80)
-    path_color = (150, 40, 20)
-    end_color = (0, 20, 255)
+    visited_color = (20, 100, 0)
+    path_color = (10, 255, 15)
+    end_color = (10, 10, 255)
+    
+    # pre-process overlays based on possible weight range for nodes
     for i in range(weight_range):
         overlay = pygame.Surface((w - gap, h - gap), pygame.SRCALPHA)
         overlay.fill((0, 0, 0))
@@ -77,9 +79,10 @@ class Node:
         if color_override:
             color = color_override
         # if self.in_queue:
-        #     pygame.draw.circle(surface, color, (self.x * w + w // 2, self.y * h + h // 2), w // 3) 
+        #     pygame.draw.circle(surface, color, (self.x * w + w // 2, self.y * h + h // 2), w // 3)
         pygame.draw.rect(surface, color, self.rect)
-        surface.blit(Node.overlays[self.weight - 1], (self.x * w, self.y * h))
+        if not self.blocked and color_override == None and color != Node.start_color:
+            surface.blit(Node.overlays[self.weight - 1], (self.x * w, self.y * h))
 
     # if node in path:
     #     node.draw(screen, path_color)
