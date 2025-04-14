@@ -2,14 +2,14 @@ alternative dijkstra implementation using incoming weights
 
 <img src="./demo1.gif" width="300" height="300"/><img src="./demo2.gif" width="300" height="300"/>
 
-| Control     | Color                                                   | Meaning             |
-| ----------- | ------------------------------------------------------- | ------------------- |
-|Left Mouse   |<code style="color:red">&#9724;Red                       |Start                |
-|Right Mouse  |<code style="color:black">&#9724;Black                   |Wall                 |
-|Middle Mouse |<code style="color:blue">&#9724;Blue                     |End                  |
-|             |<code style="color:green">&#9724;Dark Green              |Reachable from Start |
-|             |<code style="color:greenyellow">&#9724;Light Green       |Path to End          |
-|Space        |                                                         |Reset Path           |
+| Control     | Color     | Meaning             |
+| ----------- | --------- | ------------------- |
+|Left Mouse   |Red        |Start                |
+|Right Mouse  |Black      |Wall                 |
+|Middle Mouse |Blue       |End                  |
+|             |Dark Green |Reachable from Start |
+|             |Light Green|Path to End          |
+|Space        |           |Reset Path           |
 
 only requires pygame-ce
 
